@@ -1,9 +1,12 @@
 <template>
   <v-row class="fill-height">
     <v-col>
-      <v-sheet height="64">
+      <v-sheet height="60">
         <v-toolbar flat>
-          <v-btn outlined class="mr-4" @click="setToday"> Today </v-btn>
+           <v-toolbar-title>
+            預約行事曆
+          </v-toolbar-title>
+          <v-btn outlined class="mx-4" @click="setToday"> Today </v-btn>
           <v-btn fab text small @click="prev">
             <v-icon small> mdi-chevron-left </v-icon>
           </v-btn>
@@ -16,22 +19,30 @@
           <v-spacer></v-spacer>
           <v-menu bottom right>
             <template v-slot:activator="{ on, attrs }">
-              <v-btn outlined v-bind="attrs" v-on="on">
+              <v-btn outlined rounded v-bind="attrs" v-on="on" color="#7f74b4">
                 <span>{{ typeToLabel[type] }}</span>
                 <v-icon right> mdi-menu-down </v-icon>
               </v-btn>
             </template>
             <v-list>
               <v-list-item @click="type = 'day'">
-                <v-list-item-title>Day</v-list-item-title>
+                <v-list-item-title>日檢視</v-list-item-title>
               </v-list-item>
               <v-list-item @click="type = 'week'">
-                <v-list-item-title>Week</v-list-item-title>
+                <v-list-item-title>週檢視</v-list-item-title>
               </v-list-item>
-              <v-list-item @click="type = 'month'">
-                <v-list-item-title>Month</v-list-item-title>
+               <v-list-item @click="type = 'month'">
+                <v-list-item-title>月檢視</v-list-item-title>
               </v-list-item>
             </v-list>
+          </v-menu>
+          <v-menu bottom right>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn outlined rounded v-bind="attrs" v-on="on" color="#7f74b4">
+                <span>{{ people[personIndex] }}</span>
+                <v-icon right> mdi-menu-down </v-icon>
+              </v-btn>
+            </template>
           </v-menu>
         </v-toolbar>
       </v-sheet>
@@ -44,26 +55,36 @@
               <v-text-field
                 v-model="name"
                 type="text"
-                label="event name (required)"
+                label="加入預約 (必填)"
               ></v-text-field>
               <v-text-field
                 v-model="details"
                 type="text"
-                label="detail"
+                label="備註"
               ></v-text-field>
               <v-text-field
                 v-model="start"
                 type="date"
-                label="start (required)"
+                label="開始日期 (必填)"
               ></v-text-field>
               <v-text-field
                 v-model="end"
                 type="date"
-                label="end (required)"
+                label="結束日期 (必填)"
+              ></v-text-field>
+              <v-text-field
+                v-model="start"
+                type="time"
+                label="開始時間"
+              ></v-text-field>
+              <v-text-field
+                v-model="end"
+                type="time"
+                label="結束時間"
               ></v-text-field>
               <v-btn
                 type="submit"
-                color="primary"
+                color="#7f74b4"
                 class="mr-4"
                 @click.stop="dialog = false"
               >
@@ -74,18 +95,17 @@
         </v-card>
       </v-dialog>
 
-      <v-sheet height="600">
+      <v-sheet height="85%">
         <v-calendar
           ref="calendar"
           v-model="focus"
-          color="primary"
+          color="#7f74b4"
           :events="events"
           :event-color="getEventColor"
           :type="type"
           @click:event="showEvent"
           @click:more="viewDay"
           @click:date="viewDay"
-          @change="updateRange"
         ></v-calendar>
 
         <!-- pop-up -->
@@ -127,26 +147,15 @@
               >
                 取消
               </v-btn>
-              <v-btn
-                v-if="currentlyEditing !== selectedEvent.id"
-                text
-                @click.prevent="editEvent(selectedEvent)"
-              >
-                編輯
-              </v-btn>
-              <v-btn
-                text
-                v-else
-                type="submit"
-                @click.prevent="updateEvent(selectedEvent)"
-              >
-                儲存
-              </v-btn>
             </v-card-actions>
           </v-card>
         </v-menu>
       </v-sheet>
-      <v-btn outlined class="ml-7" @click="dialog = true"> + 新增預約 </v-btn>
+      <v-container>
+        <v-btn outlined rounded block class="ma-auto" @click="dialog = true">
+          + 新增預約
+        </v-btn>
+      </v-container>
     </v-col>
   </v-row>
 </template>
@@ -159,35 +168,17 @@ export default {
     focus: "",
     type: "month",
     typeToLabel: {
-      month: "Month",
-      week: "Week",
-      day: "Day",
+      month: "月檢視",
+      week: "週檢視",
+      day: "日檢視",
     },
     selectedEvent: {},
     selectedElement: null,
     selectedOpen: false,
     currentlyEditing: null,
     events: [],
-    colors: [
-      "blue",
-      "indigo",
-      "deep-purple",
-      "cyan",
-      "green",
-      "orange",
-      "grey darken-1",
-    ],
-    names: [
-      "Meeting",
-      "Holiday",
-      "PTO",
-      "Travel",
-      "Event",
-      "Birthday",
-      "Conference",
-      "Party",
-    ],
-    peoples: ["James", "Karl", "Lily"],
+    people: ["James", "Karl", "Lily"],
+    personIndex: 0,
     dialog: false,
     start: null,
     end: null,
@@ -204,6 +195,7 @@ export default {
       this.type = "day";
     },
     getEventColor(event) {
+      event.color = "grey"
       return event.color;
     },
     setToday() {
@@ -227,7 +219,6 @@ export default {
     },
     showEvent({ nativeEvent, event }) {
       const open = () => {
-        console.log(event);
         this.selectedEvent = event;
         this.selectedElement = nativeEvent.target;
         setTimeout(() => {
@@ -258,57 +249,19 @@ export default {
           (this.end = ""),
           (this.color = "");
       } else {
-        alert("You must enter event name, start, and end time");
+        alert("項目和日期為必填");
       }
-    },
-    editEvent(ev) {
-      this.currentlyEditing = ev.id;
-    },
-    async updateEvent(ev) {
-      await db.collection("myEvent").doc(this.currentlyEditing).update({
-        details: ev.details,
-      });
-      (this.selectedOpen = false), (this.currentlyEditing = null);
     },
     async deleteEvent(ev) {
       await db.collection("myEvent").doc(ev).delete();
       (this.selectedOpen = false), this.getEvents();
-    },
-    updateRange({ start, end }) {
-      const events = [];
-
-      const min = new Date(`${start.date}T00:00:00`);
-      const max = new Date(`${end.date}T23:59:59`);
-      const days = (max.getTime() - min.getTime()) / 86400000;
-      const eventCount = this.rnd(days, days + 20);
-
-      for (let i = 0; i < eventCount; i++) {
-        const allDay = this.rnd(0, 3) === 0;
-        const firstTimestamp = this.rnd(min.getTime(), max.getTime());
-        const first = new Date(firstTimestamp - (firstTimestamp % 900000));
-        const secondTimestamp = this.rnd(2, allDay ? 288 : 8) * 900000;
-        const second = new Date(first.getTime() + secondTimestamp);
-
-        events.push({
-          name: this.names[this.rnd(0, this.names.length - 1)],
-          start: first,
-          end: second,
-          color: this.colors[this.rnd(0, this.colors.length - 1)],
-          timed: !allDay,
-        });
-      }
-
-      //this.events = events
-    },
-    rnd(a, b) {
-      return Math.floor((b - a + 1) * Math.random()) + a;
     },
   },
 };
 </script>
 
 <style scoped>
-button {
+.ma-auto {
   background-color: #7f74b4;
 }
 </style>
