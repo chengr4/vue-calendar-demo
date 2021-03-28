@@ -65,6 +65,12 @@
                 type="text"
                 label="備註"
               ></v-text-field>
+              <v-checkbox
+                v-model="timeDisable"
+                label="整日"
+                color="primary"
+                hide-details
+              ></v-checkbox>
               <v-text-field
                 v-model="start"
                 type="date"
@@ -79,11 +85,13 @@
                 v-model="startTime"
                 type="time"
                 label="開始時間"
+                :disabled="timeDisable"
               ></v-text-field>
               <v-text-field
                 v-model="endTime"
                 type="time"
                 label="結束時間"
+                :disabled="timeDisable"
               ></v-text-field>
               <v-btn
                 type="submit"
@@ -193,6 +201,7 @@ export default {
     endTime: "00:00",
     details: null,
     name: null,
+    timeDisable: false,
   }),
   mounted() {
     this.$refs.calendar.checkChange();
@@ -246,6 +255,11 @@ export default {
     async addEvent() {
       if (this.name && this.start && this.end) {
         if (!this.checkDate()) return;
+        
+        if (!this.timeDisable) {
+          this.start += `T${this.startTime}:00`
+          this.end += `T${this.endTime}:00` 
+        }
 
         // 更新資料庫
         await db.collection("myEvent").add({
@@ -259,7 +273,8 @@ export default {
           (this.details = ""),
           (this.start = ""),
           (this.end = ""),
-          (this.color = "");
+          (this.color = ""),
+          (this.timeDisable = false);
       } else {
         alert("項目和日期為必填");
       }
@@ -269,13 +284,21 @@ export default {
       (this.selectedOpen = false), this.getEvents();
     },
     checkDate() {
-      const begin = new Date(`${this.start}` + `T${this.startTime}:00`);
-      const over = new Date(`${this.end}` + `T${this.endTime}:00`);
+      let begin, over;
+
+      // 整日否？
+      if (this.timeDisable) {
+        begin = new Date(`${this.start}T00:00:00`);
+        over = new Date(`${this.end}T23:59:59`);
+      } else {
+        begin = new Date(`${this.start}T${this.startTime}:00`);
+        over = new Date(`${this.end}T${this.endTime}:00`);
+      }
+      console.log(begin)
+      console.log(over)
 
       // 結束時間必須在開始時間之後
       if (begin.getTime() <= over.getTime()) {
-        this.start = begin.toISOString().substr(0, 19);
-        this.end = over.toISOString().substr(0, 19);
         return true;
       } else {
         alert("結束時間不可以早於開始時間");
