@@ -4,7 +4,7 @@
       <v-sheet>
         <v-toolbar flat id="toolbar">
           <v-toolbar-title class="title"> 預約行事曆 </v-toolbar-title>
-          <v-btn outlined class="today mx-5" @click="setToday"> Today </v-btn>
+          <v-btn outlined class="today mx-2" @click="setToday"> Today </v-btn>
           <v-btn fab text small @click="prev">
             <v-icon small> mdi-chevron-left </v-icon>
           </v-btn>
@@ -105,7 +105,7 @@
           color="#7f74b4"
           interval-width="40"
           event-text-color="black"
-          :weekday-format="getDate"
+          :weekday-format="formatWeek"
           :events="events"
           :event-color="getEventColor"
           :type="type"
@@ -283,7 +283,7 @@ export default {
       }
     },
     // 更換星期顯示方式
-    getDate(date) {
+    formatWeek(date) {
       const daysOfWeek = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
       let i = date.weekday;
       return daysOfWeek[i];
@@ -331,16 +331,11 @@ export default {
   }
 
   .v-application .title,
-  .v-application .mx-5 {
+  .v-application .today {
     display: none;
   }
   .col {
     max-height: 660px;
-  }
-
-  /* toolbar 整體 */
-  .v-toolbar__content {
-    padding: 4px 0px;
   }
 }
 </style>
